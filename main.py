@@ -1,23 +1,25 @@
-import os
-import requests
 from flask import Flask, request
+import requests
+import os
 
 app = Flask(__name__)
 
-botToken = os.getenv("BOT_TOKEN")
-chatId = os.getenv("CHAT_ID")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")  # Bisa juga lewat query
 
-@app.route('/kirim', methods=['POST'])
-def kirim_pesan():
-    data = request.json
-    message = data.get("message", "")
-    url = f"https://api.telegram.org/bot{botToken}/sendMessage"
-    payload = {
-        "chat_id": chatId,
-        "text": message
-    }
-    response = requests.post(url, json=payload)
-    return {"status": "ok", "telegram_response": response.json()}
+@app.route('/send', methods=['GET'])
+def send_message():
+    chat_id = request.args.get('chat_id', CHAT_ID)
+    text = request.args.get('text')
+
+    if not chat_id or not text:
+        return "Missing chat_id or text", 400
+
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text}
+
+    r = requests.get(url, params=payload)
+    return r.text
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=8080)
+    app.run()
