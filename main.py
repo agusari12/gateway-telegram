@@ -1,33 +1,26 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request
 import requests
-import os
 
 app = Flask(__name__)
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-TELEGRAM_API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+BOT_TOKEN = "8033826325:AAG9vBAOphBkpuoFOjm25fuNtZ7D5sY38Lo"
 
-@app.route("/send", methods=["POST"])
-def send_to_telegram():
-    try:
-        data = request.get_json()
+@app.route('/')
+def index():
+    return "Gateway Telegram aktif!"
 
-        chat_id = data.get("chat_id")
-        text = data.get("text")
+@app.route('/send', methods=['GET', 'POST'])
+def send():
+    chat_id = request.args.get('chat_id') or request.json.get('chat_id')
+    text = request.args.get('text') or request.json.get('text')
 
-        if not chat_id or not text:
-            return jsonify({"status": "error", "message": "chat_id dan text wajib"}), 400
+    if not chat_id or not text:
+        return {"status": "error", "message": "Missing chat_id or text"}, 400
 
-        payload = {
-            "chat_id": chat_id,
-            "text": text
-        }
-
-        response = requests.post(TELEGRAM_API_URL, json=payload)
-        return jsonify({"status": "success", "telegram_response": response.json()})
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": text
+    }
+    r = requests.post(url, json=payload)
+    return {"status": "ok", "telegram_response": r.json()}
